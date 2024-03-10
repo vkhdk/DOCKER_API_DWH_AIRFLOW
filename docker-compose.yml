@@ -24,6 +24,7 @@ services:
       #path to file share
       - ./DWH/file_share/dwh_postgresql_data/:/var/lib/postgresql/data
       - ./DWH/file_share/init:/docker-entrypoint-initdb.d
+      - ./DWH/file_share/dumps/:/var/lib/postgresql/dumps
     #set the DB name, user and password
     environment:
       POSTGRES_USER: 'dwh_postgres'
