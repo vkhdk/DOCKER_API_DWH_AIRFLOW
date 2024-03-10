@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  #flask_api
+  flask_api:
+    hostname: flask_api_container
+    container_name: flask_api_container
+    build: ./API
+    ports:
+      - "4000:4000"
+    environment:
+      - DB_URL=postgresql://dwh_postgres:dwh_postgres@dwh_postgres_container:5432/dwh_postgres_db
+    depends_on:
+      - postgres
+    networks:
+      - dwh_postgres
+    #command: ["python", "python_script.py"]
+
+  #DWH postgresSQL
+  postgres:
+    hostname: dwh_postgres_container
+    container_name: dwh_postgres_container
+    build: ./DWH
+    volumes:
+      #path to file share
+      - ./DWH/file_share/dwh_postgresql_data/:/var/lib/postgresql/data
+    #set the DB name, user and password
+    environment:
+      POSTGRES_DB: 'dwh_postgres_db'
+      POSTGRES_USER: 'dwh_postgres'
+      POSTGRES_PASSWORD: 'dwh_postgres'
+    ports:
+        - '5432:5432'
+    networks:
+      - dwh_postgres
+
+  #pgadmin
+  pgadmin:
+    hostname: pgadmin_container
+    container_name: pgadmin_container
+    build: ./PGADMIN
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "pgadmin@default.com"
+      PGADMIN_DEFAULT_PASSWORD: "pgadminpswrd"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    #path to file share
+    volumes:
+      - ./PGADMIN/file_share/pgadmin_data/:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - dwh_postgres
+
+networks:
+  dwh_postgres:
+    driver: bridge
