@@ -14,7 +14,6 @@ services:
       - postgres
     networks:
       - dwh_postgres
-    #command: ["python", "python_script.py"]
 
   #DWH postgresSQL
   postgres:
@@ -24,9 +23,9 @@ services:
     volumes:
       #path to file share
       - ./DWH/file_share/dwh_postgresql_data/:/var/lib/postgresql/data
+      - ./DWH/file_share/init:/docker-entrypoint-initdb.d
     #set the DB name, user and password
     environment:
-      POSTGRES_DB: 'dwh_postgres_db'
       POSTGRES_USER: 'dwh_postgres'
       POSTGRES_PASSWORD: 'dwh_postgres'
     ports:
