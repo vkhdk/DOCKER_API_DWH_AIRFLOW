@@ -10,12 +10,12 @@ x-airflow-common:
     - AIRFLOW__CORE__LOAD_EXAMPLES=False
     - AIRFLOW__CORE__LOGGING_LEVEL=INFO
   volumes:
-    - ./AIRFLOW/dags:/opt/airflow/dags
-    - ./AIRFLOW/airflow-data/logs:/opt/airflow/logs
-    - ./AIRFLOW//airflow-data/plugins:/opt/airflow/plugins
-    - ./AIRFLOW//airflow-data/airflow.cfg:/opt/airlfow/airflow.cfg
+    - ./AIRFLOW/file_share/dags:/opt/airflow/dags
+    - ./AIRFLOW/file_share/airflow-data/logs:/opt/airflow/logs
+    - ./AIRFLOW/file_share/airflow-data/plugins:/opt/airflow/plugins
+    - ./AIRFLOW/file_share/airflow-data/airflow.cfg:/opt/airlfow/airflow.cfg
   depends_on:
-    - airflow_postgres
+    - airflow_postgres_container
   networks:
     - dwh_postgres
 

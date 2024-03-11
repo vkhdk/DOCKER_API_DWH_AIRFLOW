@@ -2,3 +2,5 @@
 /PGADMIN/file_share
 #DWH
 /DWH/file_share/dwh_postgresql_data
+#Airflow
+/AIRFLOW/file_share/airflow-data
