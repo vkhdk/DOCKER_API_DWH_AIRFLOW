@@ -3,6 +3,8 @@
 #DWH
 /DWH/file_share/dwh_postgresql_data
 #Airflow
-/AIRFLOW/file_share
+/AIRFLOW/file_share/dags
+/AIRFLOW/file_share/plugins
+/AIRFLOW/file_share/logs
 #Airflow DB
 /AIRFLOW_DB/file_share/airflow_postgresql_data
