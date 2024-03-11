@@ -15,7 +15,7 @@ x-airflow-common:
     - ./AIRFLOW/file_share/airflow-data/plugins:/opt/airflow/plugins
     - ./AIRFLOW/file_share/airflow-data/airflow.cfg:/opt/airlfow/airflow.cfg
   depends_on:
-    - airflow_postgres_container
+    - airflow_postgres
   networks:
     - dwh_postgres
 
