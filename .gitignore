@@ -3,4 +3,6 @@
 #DWH
 /DWH/file_share/dwh_postgresql_data
 #Airflow
-/AIRFLOW/file_share/airflow-data
+/AIRFLOW/file_share
+#Airflow DB
+/AIRFLOW_DB/file_share/airflow_postgresql_data
