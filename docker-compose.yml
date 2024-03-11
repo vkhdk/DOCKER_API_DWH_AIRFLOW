@@ -5,7 +5,7 @@ x-airflow-common:
   image: apache/airflow:2.7.1
   environment:
     - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-    - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@postgres:5432/airflow
+    - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@airflow_postgres_container:5432/airflow
     - AIRFLOW__CORE__FERNET_KEY=h-X5VAyfboV8odeksnnqXmkFIL8DcclOOVDzBAFQ_2g=
     - AIRFLOW__CORE__LOAD_EXAMPLES=False
     - AIRFLOW__CORE__LOGGING_LEVEL=INFO
@@ -72,6 +72,8 @@ services:
 
   #airflow
   airflow_postgres:
+    host_name: airflow_postgres_container
+    container_name: airflow_postgres_container
     image: postgres:12
     environment:
       - POSTGRES_USER=postgres
