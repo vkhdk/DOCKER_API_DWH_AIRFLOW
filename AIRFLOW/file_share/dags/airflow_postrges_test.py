@@ -12,7 +12,7 @@ default_args = {
     }
 
 with DAG(
-    'postgres_test',
+    'airflow_postrges_test',
     default_args = default_args,
     schedule_interval = None,
     max_active_runs = 1,
@@ -45,7 +45,7 @@ with DAG(
     
     postgres_test = PostgresOperator(
             task_id="postgres_test",
-            postgres_conn_id="airflow_postgres_con",
+            postgres_conn_id="airflow_postgres_connection",
             sql=test_sql
             )
     
