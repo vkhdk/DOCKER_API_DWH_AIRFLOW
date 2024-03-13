@@ -15,7 +15,7 @@ test_out_db = environ.get('DB_URL')
 test_out_visit = []
 
 def visit_gen():
-  # Code to be executed every hour
+  # Code to be executed every minute
   l1 = list(range(1, 55))
   l2 = list(range(1, 44))
   random.shuffle(l1)
@@ -25,6 +25,7 @@ def visit_gen():
     visit = str(f'{i} - {j}')
   return visit
 
+# Schedule a function to be executed every minute
 schedule.every(1).minute.do(visit_gen)
 
 # Execute a query in the PostgreSQL database
