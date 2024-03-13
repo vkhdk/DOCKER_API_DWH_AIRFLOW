@@ -7,6 +7,7 @@ import random
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DB_URL')
+app.config['JSON_AS_ASCII'] = False
 db = SQLAlchemy(app)
 
 #тестовые переменные
@@ -24,8 +25,19 @@ def visit_gen():
     visit = str(f'{i} - {j}')
   return visit
 
-
 schedule.every(1).minute.do(visit_gen)
+
+# Execute a query in the PostgreSQL database
+@app.route('/query', methods=['GET'])
+def query():
+  query = "SELECT * FROM bd_shops.employers LIMIT 10"
+  result = db.engine.execute(query)
+  data = [dict(row) for row in result]
+  for row in data:
+    for key, value in row.items():
+      if isinstance(value, str):
+        row[key] = value.encode('utf-8').decode('utf-8')
+  return make_response(jsonify({'data': data}), 200)
 
 #вывод результата выполнения функции visit_gen в виде строки через app.route
 @app.route('/visit', methods=['GET'])
