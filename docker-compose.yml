@@ -15,7 +15,8 @@ x-airflow-common:
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'  # Uncomment to see some tutorials and examples
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session'
     AIRFLOW__SECRETS__BACKEND: airflow.secrets.local_filesystem.LocalFilesystemBackend
-    AIRFLOW__SECRETS__BACKEND_KWARGS: '{"variables_file_path": "/opt/secrets/variables.yaml", "connections_file_path": "/opt/secrets/connections.yaml"}'
+    AIRFLOW__SECRETS__BACKEND_KWARGS: '{"variables_file_path": "/opt/secrets/variables.yaml", 
+                                        "connections_file_path": "/opt/secrets/connections.yaml"}'
   volumes:
     - ${AIRFLOW_DAGS}:/opt/airflow/dags
     - ${AIRFLOW_LOGS}:/opt/airflow/logs
@@ -141,8 +142,6 @@ services:
           echo "   https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html#before-you-begin"
           echo
         fi
-        mkdir -p /sources/logs /sources/dags /sources/plugins
-        chown -R "${AIRFLOW_UID}:0" /sources/{logs,dags,plugins}
         exec /entrypoint airflow version
     # yamllint enable rule:line-length
     environment:
@@ -170,7 +169,7 @@ services:
     networks:
       - cluster_network
 
-  #DWH postgresSQL
+  #DWH postgreSQL
   dwh_postgres:
     hostname: dwh_postgres_container
     container_name: dwh_postgres_container
