@@ -204,6 +204,19 @@ services:
       - "5050:80"
     networks:
       - cluster_network
+
+  # python jupyter IDE in container
+  jupyter:
+      hostname: jupyter
+      container_name: jupyter_container
+      build: ./JUPYTER
+      volumes:
+          #path to file share
+          - ./JUPYTER/file_share/jupyter_data/:/home/jovyan/
+      ports:
+          - '8888:8888'
+      networks:
+          - cluster_network
     
 networks:
   cluster_network:

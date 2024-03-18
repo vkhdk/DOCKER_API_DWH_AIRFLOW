@@ -8,3 +8,11 @@
 /AIRFLOW/file_share/logs
 #Airflow DB
 /AIRFLOW_DB/file_share/airflow_postgresql_data
+#Jupyter
+/JUPYTER/file_share/jupyter_data/.cache
+/JUPYTER/file_share/jupyter_data/.ipynb_checkpoints
+/JUPYTER/file_share/jupyter_data/.ipython
+/JUPYTER/file_share/jupyter_data/.jupyter
+/JUPYTER/file_share/jupyter_data/.local
+#API
+/API/TEST

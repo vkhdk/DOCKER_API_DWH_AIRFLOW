@@ -14,6 +14,18 @@ db = SQLAlchemy(app)
 test_out_db = environ.get('DB_URL')
 test_out_visit = []
 
+
+#def check_table_filling():
+#  # Execute a query in the PostgreSQL database
+#  query = "SELECT COUNT(*) FROM bd_api.gen_visit_records"
+#  result = db.engine.execute(query)
+#  data = [dict(row) for row in result]
+#  for row in data:
+#    for key, value in row.items():
+#      if isinstance(value, str):
+#        row[key] = value.encode('utf-8').decode('utf-8')
+#  return data
+
 def visit_gen():
   # Code to be executed every minute
   l1 = list(range(1, 55))
@@ -31,7 +43,8 @@ schedule.every(1).minute.do(visit_gen)
 # Execute a query in the PostgreSQL database
 @app.route('/query', methods=['GET'])
 def query():
-  query = "SELECT * FROM bd_shops.employers LIMIT 10"
+  #query = "SELECT * FROM bd_shops.employers LIMIT 10"
+  query = "SELECT COUNT(*) FROM bd_shops.employers"
   result = db.engine.execute(query)
   data = [dict(row) for row in result]
   for row in data:
