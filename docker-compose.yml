@@ -24,7 +24,7 @@ x-airflow-common:
     - ${AIRFLOW_SECRETS}:/opt/secrets
   networks:
     - cluster_network
-  user: "${AIRFLOW_UID:-50000}:0"
+  user: '${AIRFLOW_UID:-50000}:0'
   depends_on:
     &airflow-common-depends-on
     postgres_airflow:
@@ -151,7 +151,7 @@ services:
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
-    user: "0:0"
+    user: '0:0'
     volumes:
       - .:/sources
   
@@ -161,11 +161,12 @@ services:
     container_name: flask_api_container
     build: ./API
     ports:
-      - "4000:4000"
+      - '4000:4000'
     environment:
       - DB_URL=postgresql://dwh_postgres:dwh_postgres@dwh_postgres_container:5432/dwh_shops
     depends_on:
       - dwh_postgres
+    restart: always
     networks:
       - cluster_network
 
@@ -185,6 +186,7 @@ services:
       POSTGRES_PASSWORD: 'dwh_postgres'
     ports:
         - '5432:5432'
+    restart: always
     networks:
       - cluster_network
 
@@ -201,7 +203,8 @@ services:
     volumes:
       - ./PGADMIN/file_share/pgadmin_data/:/var/lib/pgadmin
     ports:
-      - "5050:80"
+      - '5050:80'
+    restart: always
     networks:
       - cluster_network
 
@@ -215,6 +218,7 @@ services:
           - ./JUPYTER/file_share/jupyter_data/:/home/jovyan/
       ports:
           - '8888:8888'
+      restart: always
       networks:
           - cluster_network
     
