@@ -163,7 +163,9 @@ services:
     ports:
       - '4000:4000'
     environment:
-      - DB_URL=postgresql://dwh_postgres:dwh_postgres@dwh_postgres_container:5432/dwh_shops
+      - DWH_USER = 'dwh_postgres'
+      - DWH_PASSWORD = 'dwh_postgres'
+      - DWH_HOST = 'dwh_postgres_container'
     depends_on:
       - dwh_postgres
     restart: always

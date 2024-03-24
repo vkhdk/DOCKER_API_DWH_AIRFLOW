@@ -5,8 +5,13 @@ import schedule
 import time
 import random
 
+DWH_USER = environ.get('DWH_USER')
+DWH_PASSWORD = environ.get('DWH_PASSWORD')
+DWH_HOST = environ.get('DWH_HOST')
+
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DB_URL')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{DWH_USER}:{DWH_PASSWORD}@{DWH_HOST}/db_api'
 app.config['JSON_AS_ASCII'] = False
 db = SQLAlchemy(app)
 
