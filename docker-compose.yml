@@ -186,6 +186,11 @@ services:
     environment:
       POSTGRES_USER: 'dwh_postgres'
       POSTGRES_PASSWORD: 'dwh_postgres'
+    command: >
+      -c work_mem=2048MB
+      -c maintenance_work_mem=2048MB
+      -c max_wal_size=16384MB
+      -c min_wal_size=4096MB
     ports:
         - '5432:5432'
     restart: always
