@@ -160,6 +160,8 @@ services:
     hostname: flask_api_container
     container_name: flask_api_container
     build: ./API
+    volumes:
+      - ./GLOBAL_FILE_SHARE/:/GLOBAL_FILE_SHARE
     ports:
       - '4000:4000'
     environment:
@@ -182,7 +184,7 @@ services:
       - ./DWH/file_share/dwh_postgresql_data/:/var/lib/postgresql/data
       - ./DWH/file_share/init:/docker-entrypoint-initdb.d
       - ./DWH/file_share/dumps/:/var/lib/postgresql/dumps
-      - ./DWH/file_share/:/var/lib/postgresql/file_share
+      - ./GLOBAL_FILE_SHARE/:/var/lib/postgresql/GLOBAL_FILE_SHARE
     #set the DB name, user and password
     environment:
       POSTGRES_USER: 'dwh_postgres'
@@ -224,6 +226,7 @@ services:
       volumes:
           #path to file share
           - ./JUPYTER/file_share/jupyter_data/:/home/jovyan/
+          - ./GLOBAL_FILE_SHARE/:/home/jovyan/GLOBAL_FILE_SHARE
       ports:
           - '8888:8888'
       restart: always
