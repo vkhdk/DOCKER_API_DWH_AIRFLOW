@@ -225,7 +225,7 @@ services:
       build: ./JUPYTER
       volumes:
           #path to file share
-          - ./JUPYTER/file_share/jupyter_data/:/home/jovyan/
+          #- ./JUPYTER/file_share/jupyter_data/:/home/jovyan/
           - ./GLOBAL_FILE_SHARE/:/home/jovyan/GLOBAL_FILE_SHARE
       ports:
           - '8888:8888'
