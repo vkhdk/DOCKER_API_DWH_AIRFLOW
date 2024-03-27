@@ -1,38 +1,46 @@
-from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
-from os import environ
+from flask import Flask, request, jsonify, make_response
+from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Float, Date, ForeignKey, inspect
+from sqlalchemy import text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 import schedule
 import time
+import datetime
 import random
+import os
 
-DWH_USER = environ.get('DWH_USER')
-DWH_PASSWORD = environ.get('DWH_PASSWORD')
-DWH_HOST = environ.get('DWH_HOST')
-
+from default_settings import (DWH_USER, 
+                              DWH_PASSWORD, 
+                              DWH_HOST, 
+                              dwh_db_name,
+                              api_db_name,
+                              source_schema,
+                              gen_store_schema,
+                              day_gen_store,
+                              external_day_gen_store,
+                              day_gen_visits_config)
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{DWH_USER}:{DWH_PASSWORD}@{DWH_HOST}/db_api'
 app.config['JSON_AS_ASCII'] = False
-db = SQLAlchemy(app)
+engine_dwh = create_engine(f'postgresql://{DWH_USER}:{DWH_PASSWORD}@{DWH_HOST}:5432/{dwh_db_name}')
+engine_api = create_engine(f'postgresql://{DWH_USER}:{DWH_PASSWORD}@{DWH_HOST}:5432/{api_db_name}')
 
-#тестовые переменные
-test_out_db = environ.get('DB_URL')
-test_out_visit = []
+default_params = {'source_tables': {"employers": {"id": {"type": "primary", "data_type": "Integer", "function": "all"}},
+                                    "visits": {"line_size": {"type": "extra", "data_type": "Float", "function": "random_range"}},
+                                    "product": {"id": {"type": "extra", "data_type": "Integer", "function": "all"}},
+                                    "shops": {"id": {"type": "extra", "data_type": "Integer", "function": "all"}} },
+                  'extra_columns_length_limit': 500,
+                  'gen_records': 1}
 
 
-#def check_table_filling():
-#  # Execute a query in the PostgreSQL database
-#  query = "SELECT COUNT(*) FROM bd_api.gen_visit_records"
-#  result = db.engine.execute(query)
-#  data = [dict(row) for row in result]
-#  for row in data:
-#    for key, value in row.items():
-#      if isinstance(value, str):
-#        row[key] = value.encode('utf-8').decode('utf-8')
-#  return data
+#TEST
+
+res_test = {}
 
 def visit_gen():
   # Code to be executed every minute
+  current_datetime = datetime.datetime.now()
   l1 = list(range(1, 55))
   l2 = list(range(1, 44))
   random.shuffle(l1)
@@ -40,30 +48,17 @@ def visit_gen():
   n1 = list(range(1, 6))
   for i,j,n in zip(l1, l2, n1):
     visit = str(f'{i} - {j}')
-  return visit
+  res_test[current_datetime] = visit
 
 # Schedule a function to be executed every minute
 schedule.every(1).minute.do(visit_gen)
 
-# Execute a query in the PostgreSQL database
-@app.route('/query', methods=['GET'])
-def query():
-  #query = "SELECT * FROM bd_shops.employers LIMIT 10"
-  query = "SELECT COUNT(*) FROM bd_shops.employers"
-  result = db.engine.execute(query)
-  data = [dict(row) for row in result]
-  for row in data:
-    for key, value in row.items():
-      if isinstance(value, str):
-        row[key] = value.encode('utf-8').decode('utf-8')
-  return make_response(jsonify({'data': data}), 200)
-
-#вывод результата выполнения функции visit_gen в виде строки через app.route
 @app.route('/visit', methods=['GET'])
 def visit():
-  return make_response(jsonify({'visit': f'{visit_gen()}'}), 200)
+  return make_response(jsonify({'visit': f'{res_test}'}), 200)
+
 
 #create a test route
 @app.route('/test', methods=['GET'])
 def test():
-  return make_response(jsonify({'db': f'{test_out_db}', 'visit': f'{test_out_visit}'}), 200)
+  return make_response(jsonify({'engine_dwh': f'{engine_dwh}', 'engine_api': f'{engine_api}', 'default_params': f'{default_params}'}), 200)
