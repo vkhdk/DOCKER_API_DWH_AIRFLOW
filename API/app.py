@@ -9,6 +9,7 @@ import time
 import datetime
 import random
 import os
+import threading
 
 from default_settings import (DWH_USER, 
                               DWH_PASSWORD, 
@@ -50,8 +51,18 @@ def visit_gen():
     visit = str(f'{i} - {j}')
   res_test[current_datetime] = visit
 
-# Schedule a function to be executed every minute
-schedule.every(1).minute.do(visit_gen)
+# Schedule the visit_gen function to run every minute
+schedule.every(1).minutes.do(visit_gen)
+
+# Run the scheduled tasks in a separate thread
+def run_schedule():
+  while True:
+    schedule.run_pending()
+    time.sleep(1)
+
+# Start the schedule thread
+schedule_thread = threading.Thread(target=run_schedule)
+schedule_thread.start()
 
 @app.route('/visit', methods=['GET'])
 def visit():
