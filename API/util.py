@@ -3,7 +3,9 @@ import requests
 import datetime
 import os
 import datetime
-from default_settings import (DWH_USER, 
+import sys
+sys.path.append('../')
+from GLOBAL_FILE_SHARE.default_settings import (DWH_USER, 
                               DWH_PASSWORD, 
                               DWH_HOST, 
                               dwh_db_name,
@@ -12,7 +14,8 @@ from default_settings import (DWH_USER,
                               gen_store_schema,
                               day_gen_store,
                               external_day_gen_store,
-                              day_gen_visits_config)
+                              day_gen_visits_config,
+                              users_table_name)
 
 engine_dwh = create_engine(f'postgresql://{DWH_USER}:{DWH_PASSWORD}@{DWH_HOST}:5432/{dwh_db_name}', future=True)
 engine_api = create_engine(f'postgresql://{DWH_USER}:{DWH_PASSWORD}@{DWH_HOST}:5432/{api_db_name}', future=True)
@@ -112,6 +115,17 @@ def get_last_param():
             for column, row in zip(column_names, row):
                 result_dict[column] = row
     return result_dict
+
+def check_users_auth(login, password):    
+    check_query = (f"SELECT {gen_store_schema}.{users_table_name}.password FROM {gen_store_schema}.{users_table_name} "
+                   f"WHERE {gen_store_schema}.{users_table_name}.login = '{login}' ")
+    with engine_api.begin() as conn:
+        true_password = conn.execute(text(check_query)).fetchall()[0][0]
+        conn.commit()
+    if password == true_password:
+        return True
+    else:
+        return False
 
 def create_generated_data_store_table(**kwargs):
     #get variables from kwargs

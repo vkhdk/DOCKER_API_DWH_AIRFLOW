@@ -13,7 +13,8 @@ from util import (write_default_params,
                   fill_visits_table,
                   update_gen_records_param,
                   engine_dwh,
-                  engine_api
+                  engine_api,
+                  check_users_auth
                   )
 
 app = Flask(__name__)
@@ -73,8 +74,17 @@ def run_schedule():
 schedule_thread = threading.Thread(target=run_schedule)
 schedule_thread.start()
 
+# Authentication decorator
+def authenticate(func):
+    def wrapper(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_users_auth(auth.username, auth.password):
+            return make_response("Unauthorized", 401, {"WWW-Authenticate": 'Basic realm="Login Required"'})
+        return func(*args, **kwargs)
+    return wrapper
 
 @app.route('/update_param', methods=['POST'])
+@authenticate
 def get_load_gen_records_param():
     gen_records_params = request.json.get('gen_records_params')
     update_gen_records_param(gen_records_params)
