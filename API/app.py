@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, request, jsonify, make_response
+from sqlalchemy import create_engine, Table, Column, Integer, Float, MetaData, Date, inspect, text
 import schedule
 import time
 import threading
@@ -9,7 +10,10 @@ from util import (write_default_params,
                   create_generated_data_store_table,
                   check_filling_generated_data_store_table,
                   fill_generated_data_store_table,
-                  fill_visits_table)
+                  fill_visits_table,
+                  engine_dwh,
+                  engine_api
+                  )
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -21,9 +25,6 @@ default_params = {'source_tables': {"employers": {"id": {"type": "primary", "dat
                   'extra_columns_length_limit': 500,
                   'launched': True,
                   'gen_records': 1}
-
-
-write_default_params(**default_params)
 
 
 def visits_generator():
@@ -38,8 +39,26 @@ def visits_generator():
   else:
     print('Generator is not launched')
 
+conn_test_res = ''
+while conn_test_res!='OK':
+  try :
+    with engine_api.begin() as conn_api:
+      result_conn_api = conn_api.execute(text('SELECT now();')) 
+      conn_api.commit()
+    with engine_dwh.begin() as conn_dwh:
+      result_conn_dwh = conn_dwh.execute(text('SELECT now();')) 
+      conn_dwh.commit()
+    conn_test_res = 'OK'
+  except Exception as e:
+    res_test = f'Error: {e}'
+    time.sleep(5)
+
+
+# Set the default parameters
+write_default_params(**default_params)
+# First run of the visits_generator function
 visits_generator()
-# Schedule the visits_generator function to run every minute
+# Schedule the visits_generator function to run every 5 minute
 schedule.every(5).minutes.do(visits_generator)
 
 # Run the scheduled tasks in a separate thread
@@ -54,9 +73,6 @@ schedule_thread.start()
 
 
 #test routes
-@app.route('/visit', methods=['GET'])
-def visit():
-  return make_response(jsonify({'visit': f'{res_test}'}), 200)
 
 @app.route('/test', methods=['GET'])
 def test():
