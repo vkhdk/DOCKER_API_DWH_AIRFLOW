@@ -7,6 +7,7 @@ GRANT ALL PRIVILEGES ON DATABASE db_api TO dwh_postgres;
 CREATE SCHEMA api;
 CREATE TABLE api.day_gen_visits_config (
 	id serial4 NOT NULL,
+	launched boolean NOT NULL,
 	source_schema varchar NOT NULL,
 	gen_store_schema varchar NOT NULL,
 	day_gen_store varchar NOT NULL,

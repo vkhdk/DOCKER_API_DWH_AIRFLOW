@@ -1,33 +1,55 @@
+from sqlalchemy import create_engine, Table, Column, Integer, Float, MetaData, Date, inspect, text
+import datetime
+import os
+import datetime
+from default_settings import (DWH_USER, 
+                              DWH_PASSWORD, 
+                              DWH_HOST, 
+                              dwh_db_name,
+                              api_db_name,
+                              source_schema,
+                              gen_store_schema,
+                              day_gen_store,
+                              external_day_gen_store,
+                              day_gen_visits_config)
+
+engine_dwh = create_engine(f'postgresql://{DWH_USER}:{DWH_PASSWORD}@{DWH_HOST}:5432/{dwh_db_name}', future=True)
+engine_api = create_engine(f'postgresql://{DWH_USER}:{DWH_PASSWORD}@{DWH_HOST}:5432/{api_db_name}', future=True)
+
 def write_default_params(**kwargs):
     #get variables from kwargs
+    launched = kwargs['launched']
     source_tables = str(kwargs['source_tables']).replace('\'', '"')
     extra_columns_length_limit = kwargs['extra_columns_length_limit']
     gen_records = kwargs['gen_records']
     current_datetime = datetime.datetime.now()
     
     filling_default_params_query = (f"INSERT INTO {gen_store_schema}.{day_gen_visits_config} "
-                                    f"(source_schema, gen_store_schema, day_gen_store, "
+                                    f"(launched, source_schema, gen_store_schema, day_gen_store, "
                                     f"external_day_gen_store, source_tables, extra_columns_length_limit, gen_records, dt) "
-                                    f"VALUES ('{source_schema}', '{gen_store_schema}', '{day_gen_store}', '{external_day_gen_store}', "
+                                    f"VALUES ({launched}, '{source_schema}', '{gen_store_schema}', '{day_gen_store}', '{external_day_gen_store}', "
                                     f"'{source_tables}', '{extra_columns_length_limit}', '{gen_records}', '{current_datetime}');"
                                    )
     with engine_api.begin() as conn:
         result = conn.execute(text(filling_default_params_query)) 
         conn.commit()
+    print('Default parameters are written')
 
 def update_gen_records_param(new_gen_records_value):
     new_gen_records_value = new_gen_records_value
     current_datetime = datetime.datetime.now()
     insert_query = '''
-    INSERT INTO {f_gen_store_schema}.{f_day_gen_visits_config} (source_schema,
-                                                            gen_store_schema, 
-                                                            day_gen_store, 
-                                                            external_day_gen_store, 
-                                                            source_tables, 
-                                                            extra_columns_length_limit, 
-                                                            gen_records, 
-                                                            dt)
-        SELECT source_schema, 
+    INSERT INTO {f_gen_store_schema}.{f_day_gen_visits_config} (launched,
+                                                                source_schema,
+                                                                gen_store_schema, 
+                                                                day_gen_store, 
+                                                                external_day_gen_store, 
+                                                                source_tables, 
+                                                                extra_columns_length_limit, 
+                                                                gen_records, 
+                                                                dt)
+        SELECT launched,
+               source_schema, 
                gen_store_schema, 
                day_gen_store, 
                external_day_gen_store, 
@@ -211,7 +233,7 @@ def fill_generated_data_store_table(metadata_outside, **kwargs):
         conn_target.commit()
     metadata_local.drop_all(engine_api)
 
-    def fill_visits_table(**kwargs):
+def fill_visits_table(**kwargs):
     source_schema = kwargs['source_schema']
     gen_store_schema = kwargs['gen_store_schema']
     day_gen_store = kwargs['day_gen_store']
@@ -289,13 +311,14 @@ def fill_generated_data_store_table(metadata_outside, **kwargs):
         load_visits_incr_query_res = conn_dwh.execute(text(load_visits_incr_query))
         conn_dwh.commit()
         
-    relative_path = "GLOBAL_FILE_SHARE/"
-    #if the script is in the same place as the files
-    #relative_path = ""
-    absolute_path = os.path.join(os.getcwd(), relative_path, incr_file_name)
-    if os.path.exists(absolute_path):
-        # Delete the file
-        os.remove(absolute_path)
-        print("File '{}' has been deleted.".format(incr_file_name))
-    else:
-        print("File '{}' does not exist.".format(incr_file_name))    
+    relative_path = f"../GLOBAL_FILE_SHARE/{incr_file_name}"
+
+    try:
+        os.remove(relative_path)
+        print(f"File {relative_path} has been deleted.")
+    except FileNotFoundError:
+        print(f"File {relative_path} does not exist.")
+    except PermissionError:
+        print(f"You do not have permission to delete the file {relative_path}.")
+    except Exception as e:
+        print(f"An error occurred while deleting the file {relative_path}: {str(e)}") 
