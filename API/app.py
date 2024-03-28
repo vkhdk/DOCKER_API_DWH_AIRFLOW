@@ -11,6 +11,7 @@ from util import (write_default_params,
                   check_filling_generated_data_store_table,
                   fill_generated_data_store_table,
                   fill_visits_table,
+                  update_gen_records_param,
                   engine_dwh,
                   engine_api
                   )
@@ -18,14 +19,14 @@ from util import (write_default_params,
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-default_params = {'source_tables': {"employers": {"id": {"type": "primary", "data_type": "Integer", "function": "all"}},
-                                    "visits": {"line_size": {"type": "extra", "data_type": "Float", "function": "random_range"}},
-                                    "product": {"id": {"type": "extra", "data_type": "Integer", "function": "all"}},
-                                    "shops": {"id": {"type": "extra", "data_type": "Integer", "function": "all"}} },
+default_params = {'source_tables': 
+                  {"employers": {"id": {"type": "primary", "data_type": "Integer", "function": "all"}},
+                   "visits": {"line_size": {"type": "extra", "data_type": "Float", "function": "random_range"}},
+                   "product": {"id": {"type": "extra", "data_type": "Integer", "function": "all"}},
+                   "shops": {"id": {"type": "extra", "data_type": "Integer", "function": "all"}} },
                   'extra_columns_length_limit': 500,
                   'launched': True,
                   'gen_records': 1}
-
 
 def visits_generator():
   current_params = get_last_param()
@@ -39,6 +40,7 @@ def visits_generator():
   else:
     print('Generator is not launched')
 
+#before the first run is processed
 conn_test_res = ''
 while conn_test_res!='OK':
   try :
@@ -71,6 +73,12 @@ def run_schedule():
 schedule_thread = threading.Thread(target=run_schedule)
 schedule_thread.start()
 
+
+@app.route('/update_param', methods=['POST'])
+def get_load_gen_records_param():
+    gen_records_params = request.json.get('gen_records_params')
+    update_gen_records_param(gen_records_params)
+    return make_response(jsonify({'message': f'Parameters updated. New parameters >{gen_records_params}<'}), 200)
 
 #test routes
 

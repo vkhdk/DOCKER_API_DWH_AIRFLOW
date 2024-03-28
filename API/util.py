@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, Table, Column, Integer, Float, MetaData, Date, inspect, text
+import requests
 import datetime
 import os
 import datetime
@@ -35,8 +36,28 @@ def write_default_params(**kwargs):
         conn.commit()
     print('Default parameters are written')
 
-def update_gen_records_param(new_gen_records_value):
-    new_gen_records_value = new_gen_records_value
+def update_gen_records_param(new_gen_records_values):
+    launched = ''
+    gen_records = ''
+    if 'launched' in new_gen_records_values and 'gen_records' not in new_gen_records_values:
+        if new_gen_records_values['launched'] in ['True', 'False']:
+            launched = f"{new_gen_records_values['launched']} as "
+            gen_records = f"" 
+        else:
+            print(f'Incorrect parameter "launched". Entered parameters -> {new_gen_records_values}')
+    if 'gen_records' in new_gen_records_values and 'launched' not in new_gen_records_values:
+        if isinstance(new_gen_records_values['gen_records'], int):
+            gen_records = f"{(new_gen_records_values['gen_records'])} as " 
+            launched = f""
+        else:
+            print(f'Incorrect parameter "gen_records". Entered parameters -> {new_gen_records_values}')
+    if ('launched' in new_gen_records_values) and ('gen_records' in new_gen_records_values):
+        if new_gen_records_values['launched'] in ['True', 'False'] and isinstance(new_gen_records_values['gen_records'], int):
+            launched = f"{new_gen_records_values['launched']} as " 
+            gen_records = f"{new_gen_records_values['gen_records']} as " 
+        else:
+            print(f'Incorrect parameters received. Entered parameters -> {new_gen_records_values}')
+
     current_datetime = datetime.datetime.now()
     insert_query = '''
     INSERT INTO {f_gen_store_schema}.{f_day_gen_visits_config} (launched,
@@ -48,22 +69,34 @@ def update_gen_records_param(new_gen_records_value):
                                                                 extra_columns_length_limit, 
                                                                 gen_records, 
                                                                 dt)
-        SELECT launched,
-               source_schema, 
-               gen_store_schema, 
-               day_gen_store, 
-               external_day_gen_store, 
-               source_tables, 
-               extra_columns_length_limit, 
-               {f_new_gen_records_value} as gen_records, 
-               '{f_current_datetime}':: timestamptz as dt
-        FROM {f_gen_store_schema}.{f_day_gen_visits_config}
-        ORDER BY dt DESC
-        LIMIT 1;
+        WITH last_val as (
+            SELECT  launched,
+                    source_schema, 
+                    gen_store_schema, 
+                    day_gen_store, 
+                    external_day_gen_store, 
+                    source_tables, 
+                    extra_columns_length_limit, 
+                    gen_records,
+                    dt
+            FROM {f_gen_store_schema}.{f_day_gen_visits_config}
+            ORDER BY dt DESC
+            LIMIT 1)
+        SELECT  {f_launched} launched,
+                source_schema, 
+                gen_store_schema, 
+                day_gen_store, 
+                external_day_gen_store, 
+                source_tables, 
+                extra_columns_length_limit, 
+                {f_gen_records} gen_records,
+                '{f_current_datetime}':: timestamptz as dt 
+        FROM last_val
     '''
     insert_query = insert_query.format(f_gen_store_schema = gen_store_schema,
                                        f_day_gen_visits_config = day_gen_visits_config,
-                                       f_new_gen_records_value = new_gen_records_value,
+                                       f_launched = launched,
+                                       f_gen_records = gen_records,
                                        f_current_datetime = current_datetime)
     with engine_api.begin() as conn:
         result = conn.execute(text(insert_query)) 
