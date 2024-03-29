@@ -19,9 +19,6 @@ from util import (write_default_params,
                   fill_visits_table_from_json
                   )
 
-app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False
-
 default_params = {'source_tables': 
                   {"employers": {"id": {"type": "primary", "data_type": "Integer", "function": "all"}},
                    "visits": {"line_size": {"type": "extra", "data_type": "Float", "function": "random_range"}},
@@ -30,6 +27,40 @@ default_params = {'source_tables':
                   'extra_columns_length_limit': 500,
                   'launched': True,
                   'gen_records': 1}
+
+app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
+
+# Authentication decorator
+def authenticate(func):
+    def wrapper(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_users_auth(auth.username, auth.password):
+            return make_response("Unauthorized", 401, {"WWW-Authenticate": 'Basic realm="Login Required"'})
+        return func(*args, **kwargs)
+    # Renaming the function name:
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+@app.route('/update_param', methods=['POST'])
+@authenticate
+def get_load_gen_records_param():
+    gen_records_params = request.json.get('gen_records_params')
+    update_gen_records_param(gen_records_params)
+    return make_response(jsonify({'message': f'Parameters updated. New parameters >{gen_records_params}<'}), 200)
+
+@app.route('/write_visits_from_json', methods=['POST'])
+@authenticate
+def get_visits_data():
+    visits_data = request.json.get('visits_data')
+    rows_count = fill_visits_table_from_json(visits_data)
+    return make_response(jsonify({'message': f'Successfully added {rows_count} rows'}), 200)
+
+#test routes
+
+@app.route('/test', methods=['GET'])
+def test():
+  return make_response(jsonify({'engine_dwh': f'{engine_dwh}', 'engine_api': f'{engine_api}', 'default_params': f'{default_params}'}), 200)
 
 def visits_generator():
   current_params = get_last_param()
@@ -75,33 +106,3 @@ def run_schedule():
 # Start the schedule thread
 schedule_thread = threading.Thread(target=run_schedule)
 schedule_thread.start()
-
-# Authentication decorator
-def authenticate(func):
-    def wrapper(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_users_auth(auth.username, auth.password):
-            return make_response("Unauthorized", 401, {"WWW-Authenticate": 'Basic realm="Login Required"'})
-        return func(*args, **kwargs)
-    return wrapper
-
-@app.route('/update_param', methods=['POST'])
-@authenticate
-def get_load_gen_records_param():
-    gen_records_params = request.json.get('gen_records_params')
-    update_gen_records_param(gen_records_params)
-    return make_response(jsonify({'message': f'Parameters updated. New parameters >{gen_records_params}<'}), 200)
-
-@app.route('/write_visits_from_json', methods=['POST'])
-@authenticate
-def get_visits_data():
-    visits_data = request.json.get('visits_data')
-    rows_count = fill_visits_table_from_json(visits_data)
-    return make_response(jsonify({'message': f'Successfully added {rows_count} rows'}), 200)
-
-#test routes
-
-@app.route('/test', methods=['GET'])
-def test():
-  return make_response(jsonify({'engine_dwh': f'{engine_dwh}', 'engine_api': f'{engine_api}', 'default_params': f'{default_params}'}), 200)
-
