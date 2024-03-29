@@ -394,3 +394,32 @@ def fill_visits_table_from_json(json_string):
         insert_query_res = conn_dwh.execute(text(insert_query))
         conn_dwh.commit()
     return rows_count
+
+def delete_visits_table_from_json(json_string):
+    json_string = json_string.replace('\'', '"')
+    rows_in = len(json.loads(json_string))
+    json_string = json_string.replace(':', '\\:')
+    formatted_json_string = json_string.strip()
+    delete_query = '''
+    WITH sub_t AS (
+        SELECT * from json_populate_recordset(null::record,'{}')
+            AS (product_id int,
+                visit_date date,
+                line_size float,
+                employer_id int,
+                shop_id int))
+    DELETE FROM bd_shops.visits as v
+    USING sub_t
+    WHERE sub_t.product_id = v.product_id
+          AND sub_t.visit_date = v.visit_date
+          AND sub_t.line_size = v.line_size
+          AND sub_t.employer_id = v.employer_id
+          AND sub_t.shop_id = v.shop_id
+    RETURNING *
+     '''
+    delete_query = delete_query.format(formatted_json_string)
+    with engine_dwh.begin() as conn_dwh:
+        delete_query_res = conn_dwh.execute(text(delete_query))
+        rows_deleted = len(delete_query_res.fetchall())
+        conn_dwh.commit()
+    return rows_in, rows_deleted

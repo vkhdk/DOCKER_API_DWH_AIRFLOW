@@ -16,7 +16,8 @@ from util import (write_default_params,
                   engine_dwh,
                   engine_api,
                   check_users_auth,
-                  fill_visits_table_from_json
+                  fill_visits_table_from_json,
+                  delete_visits_table_from_json
                   )
 
 default_params = {'source_tables': 
@@ -51,10 +52,19 @@ def get_load_gen_records_param():
 
 @app.route('/write_visits_from_json', methods=['POST'])
 @authenticate
-def get_visits_data():
+def get_visits_data_write():
     visits_data = request.json.get('visits_data')
     rows_count = fill_visits_table_from_json(visits_data)
     return make_response(jsonify({'message': f'Successfully added {rows_count} rows'}), 200)
+
+@app.route('/delete_visits_from_json', methods=['POST'])
+@authenticate
+def get_visits_data_delete():
+    visits_data = request.json.get('visits_data')
+    rows_counts = delete_visits_table_from_json(visits_data)
+    rows_in = rows_counts[0]
+    rows_deleted = rows_counts[1]
+    return make_response(jsonify({'message': f'{rows_in} rows entered. Successfully deleted {rows_deleted} rows'}), 200)
 
 #test routes
 
