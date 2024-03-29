@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, Table, Column, Integer, Float, MetaData, D
 import schedule
 import time
 import threading
+import json
 
 from util import (write_default_params,
                   get_last_param,
@@ -14,7 +15,8 @@ from util import (write_default_params,
                   update_gen_records_param,
                   engine_dwh,
                   engine_api,
-                  check_users_auth
+                  check_users_auth,
+                  fill_visits_table_from_json
                   )
 
 app = Flask(__name__)
@@ -90,8 +92,16 @@ def get_load_gen_records_param():
     update_gen_records_param(gen_records_params)
     return make_response(jsonify({'message': f'Parameters updated. New parameters >{gen_records_params}<'}), 200)
 
+@app.route('/write_visits_from_json', methods=['POST'])
+@authenticate
+def get_visits_data():
+    visits_data = request.json.get('visits_data')
+    rows_count = fill_visits_table_from_json(visits_data)
+    return make_response(jsonify({'message': f'Successfully added {rows_count} rows'}), 200)
+
 #test routes
 
 @app.route('/test', methods=['GET'])
 def test():
   return make_response(jsonify({'engine_dwh': f'{engine_dwh}', 'engine_api': f'{engine_api}', 'default_params': f'{default_params}'}), 200)
+

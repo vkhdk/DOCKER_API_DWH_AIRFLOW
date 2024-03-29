@@ -4,6 +4,7 @@ import datetime
 import os
 import datetime
 import sys
+import json
 sys.path.append('../')
 from GLOBAL_FILE_SHARE.default_settings import (DWH_USER, 
                               DWH_PASSWORD, 
@@ -369,3 +370,27 @@ def fill_visits_table(**kwargs):
         print(f"You do not have permission to delete the file {relative_path}.")
     except Exception as e:
         print(f"An error occurred while deleting the file {relative_path}: {str(e)}") 
+
+def fill_visits_table_from_json(json_string):
+    json_string = json_string.replace('\'', '"')
+    rows_count = len(json.loads(json_string))
+    json_string = json_string.replace(':', '\\:')
+    formatted_json_string = json_string.strip()
+    insert_query = '''
+    INSERT INTO bd_shops.visits (product_id,
+                                 visit_date, 
+                                 line_size, 
+                                 employer_id, 
+                                 shop_id)
+        SELECT * from json_populate_recordset(null::record,'{}')
+            AS (product_id int,
+                visit_date date,
+                line_size float,
+                employer_id int,
+                shop_id int);
+     '''
+    insert_query = insert_query.format(formatted_json_string)
+    with engine_dwh.begin() as conn_dwh:
+        insert_query_res = conn_dwh.execute(text(insert_query))
+        conn_dwh.commit()
+    return rows_count
