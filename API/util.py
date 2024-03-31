@@ -5,6 +5,7 @@ import os
 import datetime
 import sys
 import json
+import re
 sys.path.append('../')
 from GLOBAL_FILE_SHARE.default_settings import (DWH_USER, 
                               DWH_PASSWORD, 
