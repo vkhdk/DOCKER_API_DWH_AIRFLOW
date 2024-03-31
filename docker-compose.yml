@@ -33,7 +33,14 @@ x-airflow-common:
 services:
   airflow-webserver:
     <<: *airflow-common
-    command: webserver
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow dags unpause fill_dm_month_profit &&
+        airflow dags unpause fill_dm_revizion &&
+        echo "DAGS fill_dm_month_profit and fill_dm_revizion started" &&
+        airflow webserver 
     ports:
       - 8080:8080
     healthcheck:

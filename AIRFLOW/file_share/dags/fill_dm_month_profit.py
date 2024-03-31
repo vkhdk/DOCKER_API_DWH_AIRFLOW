@@ -12,20 +12,18 @@ default_args = {
     }
 
 with DAG(
-    'dwh_postrges_test',
+    'fill_dm_month_profit',
     default_args = default_args,
-    schedule_interval = None,
+    schedule_interval = '*/30 * * * *',
     max_active_runs = 1,
     catchup = False
 ) as dag:
-    from airflow.operators.postgres_operator import PostgresOperator
+    from airflow.providers.postgres.operators.postgres import PostgresOperator
+    from airflow.operators.dummy_operator import DummyOperator
     from airflow.operators.python import PythonOperator
 
-    test_sql = '''
-            INSERT INTO bd_shops.employers(
-	            id, "Name", shop_id, salary, years_exp, departament)
-	            VALUES (4442,'Test', 42, 42, 42,'IT_lol');
-    ''' 
+    sql_function = 'dm.dm_month_profit_f()'
+    run_sql_functions = f'SELECT {sql_function};'
 
     def start_task_f():
         print('Start task')
@@ -36,8 +34,8 @@ with DAG(
             python_callable = start_task_f
             )
 
-    def end_task_f(**kwarg):
-        print('END task')
+    def end_task_f():
+        print('End task')
 
     end_task = PythonOperator(
             task_id = 'end_task',
@@ -45,10 +43,10 @@ with DAG(
             python_callable = end_task_f
             )
     
-    postgres_test = PostgresOperator(
-            task_id="postgres_test",
-            postgres_conn_id="dwh_postgres_connection",
-            sql=test_sql
+    fill_dm = PostgresOperator(
+            task_id = "fill_dm_revizion",
+            postgres_conn_id = "dwh_shops_connection",
+            sql = run_sql_functions
             )
     
-    start_task >> postgres_test >>  end_task
+    start_task >> fill_dm >>  end_task
