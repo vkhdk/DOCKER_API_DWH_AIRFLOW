@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # Create a file handler
-file_handler = logging.FileHandler('app_log.log')
+file_handler = logging.FileHandler('../GLOBAL_FILE_SHARE/app_log.log')
 file_handler.setLevel(logging.INFO)
 
 # Create a formatter and add it to the file handler
