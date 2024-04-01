@@ -6,6 +6,7 @@ import time
 import threading
 import json
 import datetime
+import logging
 
 from util import (write_default_params,
                   get_last_param,
@@ -34,11 +35,27 @@ default_params = {'source_tables':
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
+# Create a logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Create a file handler
+file_handler = logging.FileHandler('app_log.log')
+file_handler.setLevel(logging.INFO)
+
+# Create a formatter and add it to the file handler
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add the file handler to the logger
+logger.addHandler(file_handler)
+
 # Authentication decorator
 def authenticate(func):
     def wrapper(*args, **kwargs):
         auth = request.authorization
         if not auth or not check_users_auth(auth.username, auth.password):
+            logger.warning(f'Unauthorized user entered username -> {auth.username}')
             return make_response("Unauthorized", 401, {"WWW-Authenticate": 'Basic realm="Login Required"'})
         return func(*args, **kwargs)
     # Renaming the function name:
@@ -50,6 +67,7 @@ def authenticate(func):
 def get_load_gen_records_param():
     gen_records_params = request.json.get('gen_records_params')
     update_gen_records_param(gen_records_params)
+    logger.info(f'Generator parameters updated. New parameters >{gen_records_params}<')
     return make_response(jsonify({'message': f'Parameters updated. New parameters >{gen_records_params}<'}), 200)
 
 @app.route('/write_visits_from_json', methods=['POST'])
@@ -57,6 +75,7 @@ def get_load_gen_records_param():
 def get_visits_data_write():
     visits_data = request.json.get('visits_data')
     rows_count = fill_visits_table_from_json(visits_data)
+    logger.info(f'Successfully added visits data from api. Added data -> {visits_data} rows')
     return make_response(jsonify({'message': f'Successfully added {rows_count} rows'}), 200)
 
 @app.route('/delete_visits_from_json', methods=['POST'])
@@ -66,6 +85,7 @@ def get_visits_data_delete():
     rows_counts = delete_visits_table_from_json(visits_data)
     rows_in = rows_counts[0]
     rows_deleted = rows_counts[1]
+    logger.info(f'Successfully deleted visits data from api. Deleted data -> {visits_data}')
     return make_response(jsonify({'message': f'{rows_in} rows entered. Successfully deleted {rows_deleted} rows'}), 200)
 
 @app.route('/get_data_dm_revizion', methods=['POST'])
@@ -77,14 +97,18 @@ def get_dm_revizion():
       start_date = datetime.datetime.strptime(entered_data['start_date'], "%Y-%m-%d")
       end_date = datetime.datetime.strptime(entered_data['end_date'], "%Y-%m-%d")
       if start_date > end_date:
-        result = f"start_date parameter must be less than end_date"
+        logger.info(f'get_data_dm_revizion problem. Start_date parameter must be less than end_date. Current parameters -> {entered_data}')
+        result = f"Start_date parameter must be less than end_date. Current parameters -> {entered_data}"
       else:
         result = get_data_dm_revizion(entered_data['products_text'], entered_data['start_date'], entered_data['end_date'])
         if not result:
+          logger.info(f'get_data_dm_revizion problem. No data found. Check inputed parameters. Current parameters -> {entered_data}')
           result = f"No data found. Check inputed parameters. Current parameters -> {entered_data}"
     except:
+      logger.info(f'get_data_dm_revizion problem. The date format should be like "YYYY-MM-DD". Current parameters -> {entered_data}')
       result = f"The date format should be like 'YYYY-MM-DD'. Current parameters -> {entered_data}"
   else:
+    logger.info(f'get_data_dm_revizion problem. All three parameters must be provided. Current parameters -> {entered_data}')
     result = f"All three parameters must be provided. Current parameters -> {entered_data}"
   return make_response(jsonify({'message': f'{result}'}), 200)
 
@@ -96,15 +120,18 @@ def test():
 #######
 
 def visits_generator():
+  logger.info('Visits_generator started')
   current_params = get_last_param()
   if current_params['launched'] == True:
     metadata = create_generated_data_store_table(**current_params)
     if check_filling_generated_data_store_table(metadata, **current_params) == True:
       fill_generated_data_store_table(metadata, **current_params)
     else:
-      print('Table is full')
+      logger.info('generated_data_store_table is full')
+      print('generated_data_store_table is full')
     fill_visits_table(**current_params)
   else:
+    logger.info('Visits_generator is not launched')
     print('Generator is not launched')
 
 #before the first run is processed
@@ -127,11 +154,13 @@ while conn_test_res!='OK':
 write_default_params(**default_params)
 # First run of the visits_generator function
 visits_generator()
-# Schedule the visits_generator function to run every 5 minute
-schedule.every(5).minutes.do(visits_generator)
+logger.info('First run of the visits_generator after the API started')
+# Schedule the visits_generator function to run every 60 minute
+schedule.every(60).minutes.do(visits_generator)
 
 # Run the scheduled tasks in a separate thread
 def run_schedule():
+  logger.info('API scheduler started')
   while True:
     schedule.run_pending()
     time.sleep(1)
