@@ -66,9 +66,33 @@ def authenticate(func):
 @authenticate
 def get_load_gen_records_param():
     gen_records_params = request.json.get('gen_records_params')
-    update_gen_records_param(gen_records_params)
-    logger.info(f'Generator parameters updated. New parameters >{gen_records_params}<')
-    return make_response(jsonify({'message': f'Parameters updated. New parameters >{gen_records_params}<'}), 200)
+    if 'launched' in gen_records_params and 'gen_records' not in gen_records_params:
+        if gen_records_params['launched'] in ['True', 'False']:
+            launched = f"{gen_records_params['launched']} as "
+            gen_records = f""
+            update_gen_records_param(launched, gen_records)
+            result = (f'Parameters updated. New parameters >{gen_records_params}<')
+        else:
+            result = (f'Incorrect parameter "launched". Entered parameters -> {gen_records_params}')
+    if 'gen_records' in gen_records_params and 'launched' not in gen_records_params:
+        if isinstance(gen_records_params['gen_records'], int):
+            gen_records = f"{(gen_records_params['gen_records'])} as " 
+            launched = f""
+            update_gen_records_param(launched, gen_records)
+            result = (f'Parameters updated. New parameters >{gen_records_params}<')
+        else:
+            result = (f'Incorrect parameter "gen_records". Entered parameters -> {gen_records_params}')
+    if ('launched' in gen_records_params) and ('gen_records' in gen_records_params):
+        if gen_records_params['launched'] in ['True', 'False'] and isinstance(gen_records_params['gen_records'], int):
+            launched = f"{gen_records_params['launched']} as " 
+            gen_records = f"{gen_records_params['gen_records']} as " 
+            update_gen_records_param(launched, gen_records)
+            result = (f'Parameters updated. New parameters >{gen_records_params}<')
+        else:
+            result = (f'Incorrect parameters received. Entered parameters -> {gen_records_params}')
+
+    logger.info(f'{result}')
+    return make_response(jsonify({'{message': f'{result}'}), 200)
 
 @app.route('/write_visits_from_json', methods=['POST'])
 @authenticate
