@@ -59,7 +59,7 @@ print(response.text)
 
 # filter field example
 products_text = 'Помидоры, Креветки'
-start_date = '2026-12-30'
+start_date = '2021-12-30'
 end_date = '2024-12-31'
 
 # get data from dm by filters
