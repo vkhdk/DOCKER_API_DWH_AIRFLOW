@@ -57,4 +57,14 @@ data = {"visits_data": f"{json_string}"}
 response = requests.post(url, json=data, auth=('ivan', 'ivan123'))
 print(response.text)
 
+# filter field example
+products_text = 'Помидоры, Креветки'
+start_date = '2026-12-30'
+end_date = '2024-12-31'
+
+# get data from dm by filters
+url = 'http://localhost:4000/get_data_dm_revizion'
+data = {"dm_revizion_data": {"products_text": products_text, 'start_date': start_date, 'end_date': end_date}}
+response = requests.post(url, json=data, auth=('ivan', 'ivan123'))
+print(response.text)
 ```
