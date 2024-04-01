@@ -424,3 +424,23 @@ def delete_visits_table_from_json(json_string):
         rows_deleted = len(delete_query_res.fetchall())
         conn_dwh.commit()
     return rows_in, rows_deleted
+
+def get_data_dm_revizion(products_text, start_date, end_date):
+    characters_to_remove = ".!?'\" "
+    products_list = re.sub(f"[{re.escape(characters_to_remove)}]", "", products_text).split(',')
+    product_list_enter = ', '.join([f"'{product}'" for product in products_list])
+    select_query = '''
+    SELECT json_agg(sub_s) 
+    FROM (SELECT * 
+          FROM dm.dm_revizion dm 
+          WHERE dm.product_name IN ({f_product_list_enter}) 
+                      AND dm.revizion_date >= '{f_start_date}' 
+                      AND dm.revizion_date < '{f_end_date}') AS sub_s;
+    '''
+    select_query = select_query.format(f_product_list_enter = product_list_enter,
+                                       f_start_date = start_date,
+                                       f_end_date = end_date)
+    with engine_dwh.begin() as conn_dwh:
+        select_query_res = conn_dwh.execute(text(select_query)).fetchall()
+        conn_dwh.commit()
+    return(select_query_res[0][0])

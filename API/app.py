@@ -5,6 +5,7 @@ import schedule
 import time
 import threading
 import json
+import datetime
 
 from util import (write_default_params,
                   get_last_param,
@@ -17,7 +18,8 @@ from util import (write_default_params,
                   engine_api,
                   check_users_auth,
                   fill_visits_table_from_json,
-                  delete_visits_table_from_json
+                  delete_visits_table_from_json,
+                  get_data_dm_revizion
                   )
 
 default_params = {'source_tables': 
@@ -66,11 +68,32 @@ def get_visits_data_delete():
     rows_deleted = rows_counts[1]
     return make_response(jsonify({'message': f'{rows_in} rows entered. Successfully deleted {rows_deleted} rows'}), 200)
 
-#test routes
+@app.route('/get_data_dm_revizion', methods=['POST'])
+@authenticate
+def get_dm_revizion():
+  entered_data = request.json.get('dm_revizion_data')
+  if 'products_text' in entered_data and 'start_date' in entered_data and 'end_date' in entered_data:
+    try:
+      start_date = datetime.datetime.strptime(entered_data['start_date'], "%Y-%m-%d")
+      end_date = datetime.datetime.strptime(entered_data['end_date'], "%Y-%m-%d")
+      if start_date > end_date:
+        result = f"start_date parameter must be less than end_date"
+      else:
+        result = get_data_dm_revizion(entered_data['products_text'], entered_data['start_date'], entered_data['end_date'])
+        if not result:
+          result = f"No data found. Check inputed parameters. Current parameters -> {entered_data}"
+    except:
+      result = f"The date format should be like 'YYYY-MM-DD'. Current parameters -> {entered_data}"
+  else:
+    result = f"All three parameters must be provided. Current parameters -> {entered_data}"
+  return make_response(jsonify({'message': f'{result}'}), 200)
 
+#######
+# test route with out authentication
 @app.route('/test', methods=['GET'])
 def test():
-  return make_response(jsonify({'engine_dwh': f'{engine_dwh}', 'engine_api': f'{engine_api}', 'default_params': f'{default_params}'}), 200)
+  return make_response(jsonify({'default_params': f'{default_params}'}), 200)
+#######
 
 def visits_generator():
   current_params = get_last_param()
