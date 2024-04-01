@@ -21,6 +21,11 @@
 - User: masha
 - Password: masha321
 
+# Data marts
+Data marts are located in the dm schema in the dwh_shops database
+-- dm_revizion
+-- dm_month_profit
+
 ## Python code examples for working with API
 
 ```
